@@ -5,8 +5,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
 from django.views.generic import DetailView, View
 
-from .models import Notebook, Smartphone, Category, LatestProducts, Customer,\
-    Cart, CartProduct
+from .models import Category, Customer,\
+    Cart, CartProduct, Product
 from .mixins import CategoryDetailMixin, CartMixin
 from .forms import OrderForm
 from .utils import recalc_cart
@@ -18,23 +18,11 @@ class BaseView(CartMixin, View):
 
     def get(self, request, *args, **kwargs):
         categories = Category.objects.get_categories_for_sidebar()
-        products = LatestProducts.objects.get_products_for_main_page(
-            'notebook', 'smartphone', with_respect_to='notebook'
-        )
+        products = Product.objects.all()
         return render(request, 'mainapp/base.html', {'categories': categories, 'products': products, 'cart': self.cart})
 
 
 class ProductDetailView(CartMixin, CategoryDetailMixin, DetailView):
-
-    CT_MODEL_MODEL_CLASS = {
-        'notebook': Notebook,
-        'smartphone': Smartphone,
-    }
-
-    def dispatch(self, request, *args, **kwargs):
-        self.model = self.CT_MODEL_MODEL_CLASS[kwargs['ct_model']]
-        self.queryset = self.model._base_manager.all()
-        return super().dispatch(request, *args, **kwargs)
 
     context_object_name = 'product'
     template_name = 'mainapp/product_detail.html'
@@ -42,7 +30,6 @@ class ProductDetailView(CartMixin, CategoryDetailMixin, DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ct_model'] = self.model._meta.model_name
         context['cart'] = self.cart
         return context
 
