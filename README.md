@@ -1,0 +1,1 @@
+echo "# Django_Shop" 
